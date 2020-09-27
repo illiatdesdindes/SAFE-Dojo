@@ -66,22 +66,17 @@ let private asWeatherResponse (weather: DataAccess.WeatherAPI.MetaWeatherLocatio
 
 let getWeather postcode =
     async {
-        (* Task 4.1 WEATHER: Implement a function that retrieves the weather for
-       the given postcode. Use the GeoLocation.getLocation, Weather.getWeatherForPosition and
-       asWeatherResponse functions to create and return a WeatherResponse instead of the stub.
-       Don't forget to use let! instead of let to "await" the Task. *)
-        return! async.Return
-                    { WeatherType = WeatherType.Clear
-                      AverageTemperature = 0. }
+        let! location = GeoLocationAPI.getLocation (postcode)
+        let! weatherResponse = WeatherAPI.getWeatherForPosition location.LatLong
+
+        return asWeatherResponse weatherResponse
     }
 
 let dojoApi =
     { GetDistance = getDistanceFromLondon
       GetRandomLocation = getRandomLocation
-
-      (* Task 1.0 CRIME: Bind the getCrimeReport function to the GetCrimes method to
-         return crime data. Use the above GetDistance field as an example. *)
       GetCrimes = getCrimeReport
+      GetWeather = getWeather
 
     (* Task 4.2 WEATHER: Hook up the weather endpoint to the getWeather function. *)
     }

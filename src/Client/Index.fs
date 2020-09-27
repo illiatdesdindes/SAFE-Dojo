@@ -16,7 +16,8 @@ open Shared
 /// The different elements of the completed report.
 type Report =
     { Location: LocationResponse
-      Crimes: CrimeResponse array }
+      Crimes: CrimeResponse array
+      Weather: WeatherResponse }
 
 type ServerState =
     | Idle
@@ -38,6 +39,7 @@ type Msg =
     | GotReport of Report
     | ErrorMsg of exn
     | PrefillAnAddress
+    | ClearInput
 
 /// The init function is called to start the message pump with an initial view.
 let init () =
@@ -52,16 +54,30 @@ let dojoApi =
     |> Remoting.withRouteBuilder Route.builder
     |> Remoting.buildProxy<IDojoApi>
 
+let getAdditionalInfo location postcode =
+    async {
+        let! crimes = dojoApi.GetCrimes postcode
+        let! weather = dojoApi.GetWeather postcode
+
+        return { Location = location
+                 Crimes = crimes
+                 Weather = weather }
+    }
+
+let getRandomAddress () =
+    async {
+        let! location = dojoApi.GetRandomLocation()
+        let! report = getAdditionalInfo location location.Postcode
+
+        return report
+    }
+
 let getResponse postcode =
     async {
         let! location = dojoApi.GetDistance postcode
-        let! crimes = dojoApi.GetCrimes postcode
+        let! report = getAdditionalInfo location postcode
 
-        (* Task 4.4 WEATHER: Fetch the weather from the API endpoint you created.
-       Then, save its value into the Report below. You'll need to add a new
-       field to the Report type first, though! *)
-
-        return { Location = location; Crimes = crimes }
+        return report
     }
 
 /// The update function knows how to update the model given a message.
@@ -69,9 +85,12 @@ let update msg model =
     match model, msg with
     | { ValidationError = None; Postcode = postcode }, GetReport ->
         { model with ServerState = Loading }, Cmd.OfAsync.either getResponse postcode GotReport ErrorMsg
+    | _, GetRandomAddress ->
+        { model with ServerState = Loading }, Cmd.OfAsync.either getRandomAddress () GotReport ErrorMsg
     | _, GetReport -> model, Cmd.none
     | _, GotReport response ->
         { model with
+              Postcode = response.Location.Postcode
               ValidationError = None
               Report = Some response
               ServerState = Idle },
@@ -79,8 +98,6 @@ let update msg model =
     | _, PostcodeChanged p ->
         { model with
               Postcode = p
-              (* Task 2.2 Validation. Use the Validation.isValidPostcode function to implement client-side form validation.
-               Note that the validation is the same shared code that runs on the server! *)
               ValidationError =
                   if Validation.isValidPostcode p || p = "" then None else Some("Post code is not valid my friend") },
         Cmd.none
@@ -91,6 +108,12 @@ let update msg model =
     | _, PrefillAnAddress ->
         { model with
               Postcode = "EC2A 4NE"
+              ValidationError = None },
+        Cmd.none
+    | _, ClearInput ->
+        { model with
+              Postcode = ""
+              Report = None
               ValidationError = None },
         Cmd.none
 
@@ -171,9 +194,9 @@ module ViewParts =
                         Level.title [] [
                             Heading.h3 [ Heading.Is4
                                          Heading.Props [ Style [ Width "100%" ] ] ] [
-                                (* Task 4.7 WEATHER: Get the temperature from the given weather report
-                                   and display it here instead of an empty string. *)
-                                str ""
+                                weatherReport.AverageTemperature
+                                |> sprintf "%.1f °C"
+                                |> str
                             ]
                         ]
                     ]
@@ -263,6 +286,11 @@ let view (model: Model) dispatch =
                                             Button.IsLoading(model.ServerState = ServerState.Loading) ] [
                                 str "Random"
                             ]
+                            Button.button [ Button.IsFullWidth
+                                            Button.Color IsSuccess
+                                            Button.OnClick(fun _ -> dispatch ClearInput) ] [
+                                str "Reset"
+                            ]
                         ]
                     ]
                 ]
@@ -291,6 +319,7 @@ let view (model: Model) dispatch =
                 Tile.ancestor [] [
                     Tile.parent [ Tile.IsVertical; Tile.Size Tile.Is4 ] [
                         locationTile report
+                        weatherTile report.Weather
                     ]
                     Tile.parent [ Tile.Size Tile.Is8 ] [
                         crimeTile report.Crimes
