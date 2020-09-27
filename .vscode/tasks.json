@@ -6,16 +6,27 @@
         {
             "label": "Build Server",
             "command": "dotnet",
-            "args": [ "build" ],
+            "args": [
+                "build"
+            ],
             "type": "shell",
-            "options": { "cwd": "${workspaceFolder}/src/Server" },
+            "options": {
+                "cwd": "${workspaceFolder}/src/Server"
+            },
             "group": "build",
-            "problemMatcher": [ "$msCompile" ]
+            "problemMatcher": [
+                "$msCompile"
+            ]
         },
         {
             "label": "Watch Client and Server",
-            "command": "fake",
-            "args": [ "build", "-t", "Run" ],
+            "command": "dotnet",
+            "args": [
+                "fake",
+                "build",
+                "-t",
+                "Run"
+            ],
             "type": "shell",
             "options": {
                 "cwd": "${workspaceFolder}",
@@ -28,8 +39,12 @@
             "problemMatcher": {
                 "fileLocation": "absolute",
                 "background": {
-                    "beginsPattern": { "regexp": "run Run" },
-                    "endsPattern": { "regexp": "i ｢wdm｣: Compiled|ℹ ｢wdm｣: Compiled|The terminal process terminated" },
+                    "beginsPattern": {
+                        "regexp": "run Run"
+                    },
+                    "endsPattern": {
+                        "regexp": "i ｢wdm｣: Compiled|ℹ ｢wdm｣: Compiled|The terminal process terminated"
+                    },
                     "activeOnStart": true
                 },
                 "pattern": {
@@ -46,8 +61,13 @@
         },
         {
             "label": "Watch Client",
-            "command": "fake",
-            "args": [ "build", "-t", "Run" ],
+            "command": "dotnet",
+            "args": [
+                "fake",
+                "build",
+                "-t",
+                "Run"
+            ],
             "type": "shell",
             "options": {
                 "cwd": "${workspaceFolder}",
@@ -61,8 +81,12 @@
             "problemMatcher": {
                 "fileLocation": "absolute",
                 "background": {
-                    "beginsPattern": { "regexp": "run Run" },
-                    "endsPattern": { "regexp": "i ｢wdm｣: Compiled|ℹ ｢wdm｣: Compiled|The terminal process terminated" },
+                    "beginsPattern": {
+                        "regexp": "run Run"
+                    },
+                    "endsPattern": {
+                        "regexp": "i ｢wdm｣: Compiled|ℹ ｢wdm｣: Compiled|The terminal process terminated"
+                    },
                     "activeOnStart": true
                 },
                 "pattern": {
